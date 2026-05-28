@@ -682,26 +682,68 @@
 
     // Claim profile by phone prompt or provided phone string
     function claimProfileByPhone(phoneInput) {
-      if (!currentUser) { alert('Please sign in first to claim a profile.'); showPage('authPage'); return; }
-      let phone = phoneInput || prompt('Enter your phone/WhatsApp number to claim your profile:');
+      if (!currentUser) {
+        alert('Please sign in first to claim a profile.');
+        showPage('authPage');
+        return;
+      }
+
+      let phone = phoneInput || prompt('Enter your phone/WhatsApp number:');
+
       if (!phone) return;
-      phone = phone.replace(/\s+/g,'').replace(/[^0-9+]/g,'');
-      profilesRef.once('value').then(snap => {
-        const profiles = snap.val() || {};
-        let foundKey = null, foundProfile = null;
-        Object.entries(profiles).forEach(([k, p]) => {
-          if (!p) return;
-          const pNum = (p.contact||'').replace(/\s+/g,'').replace(/[^0-9+]/g,'');
-          if (pNum === phone) { foundKey = k; foundProfile = p; }
+
+      // Normalize: keep only digits
+      phone = phone.replace(/\D/g, '');
+
+      // Extract last 9 digits (local number without country code)
+      const localPhone = phone.slice(-9);
+
+      if (localPhone.length < 9) {
+        alert('Phone number must have at least 9 digits.');
+        return;
+      }
+
+      profilesRef.once('value').then(snapshot => {
+        const profiles = snapshot.val() || {};
+
+        let foundKey = null;
+        let foundProfile = null;
+
+        Object.entries(profiles).forEach(([key, profile]) => {
+          if (!profile || !profile.contact) return;
+
+          let savedPhone = profile.contact.replace(/\D/g, '');
+          const savedLocal = savedPhone.slice(-9);
+
+          if (savedLocal === localPhone) {
+            foundKey = key;
+            foundProfile = profile;
+          }
         });
-        if (!foundKey) return alert('No profile found with that phone.');
+
+        if (!foundProfile) {
+          alert('No profile found with that number.');
+          return;
+        }
+
         foundProfile.userId = currentUser.uid;
-        foundProfile.email = currentUser.email || foundProfile.email || '';
-        profilesRef.child(currentUser.uid).set(foundProfile).then(() => {
-          if (foundKey !== currentUser.uid) profilesRef.child(foundKey).remove();
-          alert('Profile claimed and linked to your account.');
-          loadOwnProfile();
-        }).catch(err => alert('Failed to claim profile: ' + err.message));
+        foundProfile.email = currentUser.email;
+
+        profilesRef.child(currentUser.uid).set(foundProfile)
+          .then(() => {
+
+            // remove old anonymous profile
+            if (foundKey !== currentUser.uid) {
+              profilesRef.child(foundKey).remove();
+            }
+
+            alert('Profile claimed successfully!');
+            loadOwnProfile();
+          })
+          .catch(error => {
+            alert('Error claiming profile: ' + error.message);
+          });
+
       });
     }
 
