@@ -185,7 +185,10 @@
           <input type="email" id="loginEmail" placeholder="Email">
           <input type="password" id="loginPassword" placeholder="Password">
           <button onclick="login()">Login</button>
-          <div style="margin-top:8px;"><button onclick="claimProfileByPhone()" style="background:#1565c0;">Claim Profile (by phone)</button></div>
+          <div style="margin-top:8px;">
+            <input type="text" id="claimPhoneAuth" placeholder="Enter phone to claim profile" style="width:100%; margin-bottom:8px;">
+            <button onclick="claimProfileByPhone(document.getElementById('claimPhoneAuth').value)" style="background:#1565c0;">Claim Profile</button>
+          </div>
         </div>
         <div style="flex:1; min-width:260px;">
           <h3>Create Account</h3>
@@ -231,7 +234,10 @@
       <input type="file" id="photo" accept="image/*">
       <input type="hidden" id="currentPhotoURL">
       <button onclick="addProfile()">Save Profile</button>
-      <button onclick="claimProfileByPhone()" style="margin-left:8px; background:#f0ad4e;">Claim Existing Profile</button>
+      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <input type="text" id="claimPhoneProfile" placeholder="Phone to claim existing profile" style="flex:1; min-width:180px; padding:10px 12px; border:1px solid #ccc; border-radius:8px;">
+        <button onclick="claimProfileByPhone(document.getElementById('claimPhoneProfile').value)" style="background:#f0ad4e;">Claim Existing Profile</button>
+      </div>
       <p id="successMsg" style="display:none; color:green; font-weight:bold; margin-top:10px;">
   ✅ Profile added successfully. Go to Profiles to view it.
 </p>
@@ -633,11 +639,14 @@
 
       auth.createUserWithEmailAndPassword(email, password)
         .then((cred) => {
+          currentUser = cred.user;
+          updateAuthUI();
           const user = cred.user;
           if (regPhone && user) {
             const profileData = { userId: user.uid, email: user.email, contact: regPhone };
             profilesRef.child(user.uid).set(profileData);
           }
+          loadOwnProfile();
           alert('Account created successfully. You can now add your profile.');
           showPage('profilePage');
         })
@@ -654,7 +663,10 @@
       }
 
       auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
+        .then((cred) => {
+          currentUser = cred.user;
+          updateAuthUI();
+          loadOwnProfile();
           alert('Logged in successfully.');
           showPage('profilePage');
         })
