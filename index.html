@@ -661,6 +661,16 @@
         .catch(error => alert(error.message));
     }
 
+    function normalizePhoneNumber(phone) {
+      if (!phone) return '';
+      const digits = phone.replace(/\D/g, '');
+      return digits.slice(-9);
+    }
+
+    function phoneMatches(a, b) {
+      return normalizePhoneNumber(a) && normalizePhoneNumber(a) === normalizePhoneNumber(b);
+    }
+
     // Try to link any existing profile that matches the signed-in user's email
     function linkProfileIfExistsByEmail(user) {
       if (!user) return;
@@ -692,13 +702,8 @@
 
       if (!phone) return;
 
-      // Normalize: keep only digits
-      phone = phone.replace(/\D/g, '');
-
-      // Extract last 9 digits (local number without country code)
-      const localPhone = phone.slice(-9);
-
-      if (localPhone.length < 9) {
+      const localPhone = normalizePhoneNumber(phone);
+      if (!localPhone || localPhone.length < 9) {
         alert('Phone number must have at least 9 digits.');
         return;
       }
@@ -711,39 +716,37 @@
 
         Object.entries(profiles).forEach(([key, profile]) => {
           if (!profile || !profile.contact) return;
-
-          let savedPhone = profile.contact.replace(/\D/g, '');
-          const savedLocal = savedPhone.slice(-9);
-
-          if (savedLocal === localPhone) {
+          if (phoneMatches(profile.contact, localPhone)) {
             foundKey = key;
             foundProfile = profile;
           }
         });
 
         if (!foundProfile) {
-          alert('No profile found with that number.');
+          alert(`No profile found with that number. Try again using the same digits as your saved campus profile. Normalized number: ${localPhone}`);
+          return;
+        }
+
+        if (foundKey === currentUser.uid) {
+          alert('This profile is already linked to your account.');
+          loadOwnProfile();
           return;
         }
 
         foundProfile.userId = currentUser.uid;
-        foundProfile.email = currentUser.email;
+        foundProfile.email = currentUser.email || foundProfile.email || '';
 
         profilesRef.child(currentUser.uid).set(foundProfile)
           .then(() => {
-
-            // remove old anonymous profile
             if (foundKey !== currentUser.uid) {
               profilesRef.child(foundKey).remove();
             }
-
             alert('Profile claimed successfully!');
             loadOwnProfile();
           })
           .catch(error => {
             alert('Error claiming profile: ' + error.message);
           });
-
       });
     }
 
