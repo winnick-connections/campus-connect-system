@@ -140,7 +140,14 @@
       <button onclick="showPage('homePage')">Home</button>
       <button onclick="showPage('profilePage')">Add Profile</button>
       <button onclick="showPage('profilesPage')">Profiles</button>
+      <button onclick="showPage('chatPage')">Chat</button>
+      <button id="adminNavBtn" onclick="showPage('adminPage')" style="display:none;">Admin</button>
       <button onclick="showPage('aboutPage')">About</button>
+      <button onclick="showPage('authPage')">Login / Register</button>
+    </div>
+    <div style="text-align:center; margin-top:10px; color:#fff;">
+      <span id="authStatus">Not signed in</span>
+      <button id="logoutBtn" onclick="logout()" style="display:none; margin-left:12px; background:#ff6f61; border:none; color:white; border-radius:8px; padding:8px 12px; cursor:pointer;">Logout</button>
     </div>
     <h1>Campus Connect System</h1>
     <p>Meet and connect with students on campus</p>
@@ -170,6 +177,69 @@
       </div>
     </div>
 
+    <!-- Auth Page -->
+    <div class="card page" id="authPage" style="display:none;">
+      <h2>Student Login & Registration</h2>
+      <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:15px;">
+        <div style="flex:1; min-width:260px;">
+          <h3>Sign In</h3>
+          <input type="email" id="loginEmail" placeholder="Email">
+          <input type="password" id="loginPassword" placeholder="Password">
+          <button onclick="login()">Login</button>
+        </div>
+        <div style="flex:1; min-width:260px;">
+          <h3>Create Account</h3>
+          <input type="email" id="registerEmail" placeholder="Email">
+          <input type="password" id="registerPassword" placeholder="Password">
+          <input type="password" id="registerConfirmPassword" placeholder="Confirm Password">
+          <button onclick="signUp()">Sign Up</button>
+        </div>
+      </div>
+      <p style="margin-top:15px; font-size:14px; color:#555;">
+        Use an email and password to create a secure student account. Once signed in, you can add and edit your own profile.
+      </p>
+    </div>
+
+    <!-- Chat Page -->
+    <div class="card page" id="chatPage" style="display:none;">
+      <h2>Student Chat</h2>
+      <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:15px;">
+        <div style="flex:1; min-width:260px; max-width:320px;">
+          <h3>Inbox</h3>
+          <div id="chatList" style="display:grid; gap:10px; max-height:420px; overflow:auto; padding:10px 0;"></div>
+        </div>
+        <div style="flex:2; min-width:260px;">
+          <h3 id="chatTitle">Select a student to chat</h3>
+          <div id="chatMessages" style="background:#f7fbff; padding:15px; border-radius:12px; min-height:320px; max-height:420px; overflow:auto; border:1px solid #dcebf7;"></div>
+          <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <input type="text" id="chatInput" placeholder="Write a message..." style="flex:1; min-width:220px; padding:10px 12px; border:1px solid #ccc; border-radius:8px;">
+            <button onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:15px; font-size:14px; color:#555;">Use chat to message other students in real time. Online status updates automatically.</p>
+    </div>
+
+    <!-- Admin Page -->
+    <div class="card page" id="adminPage" style="display:none;">
+      <h2>Admin Dashboard</h2>
+      <div style="display:flex; gap:15px; flex-wrap:wrap; margin-top:15px;">
+        <div style="flex:1; min-width:220px; background:#f1f7ff; border:1px solid #d6e7fb; border-radius:12px; padding:14px;">
+          <h3>Total Students</h3>
+          <p id="adminTotalStudents" style="font-size:28px; font-weight:700; margin:10px 0;">0</p>
+        </div>
+        <div style="flex:1; min-width:220px; background:#fff4f4; border:1px solid #f2d7dc; border-radius:12px; padding:14px;">
+          <h3>Banned Accounts</h3>
+          <p id="adminBannedCount" style="font-size:28px; font-weight:700; margin:10px 0;">0</p>
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <h3>Manage Student Profiles</h3>
+        <p style="font-size:14px; color:#555;">Delete fake profiles, ban spam accounts, or review student records.</p>
+        <div id="adminProfileList" style="display:grid; gap:12px; margin-top:12px;"></div>
+      </div>
+    </div>
+
     <!-- Create Profile Page -->
     <div class="card page" id="profilePage" style="display:none;">
       <h2>Create Your Profile</h2>
@@ -178,7 +248,8 @@
       <input type="text" id="contact" placeholder="Phone or WhatsApp">
       <textarea id="about" placeholder="About you"></textarea>
       <input type="file" id="photo" accept="image/*">
-      <button onclick="addProfile()">Add Profile</button>
+      <input type="hidden" id="currentPhotoURL">
+      <button onclick="addProfile()">Save Profile</button>
       <p id="successMsg" style="display:none; color:green; font-weight:bold; margin-top:10px;">
   ✅ Profile added successfully. Go to Profiles to view it.
 </p>
@@ -241,6 +312,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
   <script>
     const firebaseConfig = {
@@ -254,16 +326,37 @@
     };
 
     const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const database = firebase.database();
     const profilesRef = database.ref('profiles');
+    const messagesRef = database.ref('messages');
+    const presenceRef = database.ref('presence');
+    const adminEmails = ['admin@campus.com'];
+    let currentUser = null;
+    let lastProfilesSnapshot = null;
+    let currentChatRef = null;
+    let activeChatUserId = null;
+    const presenceMap = {};
 
     function addProfile() {
+      if (!currentUser) {
+        alert('Please sign in or create an account to manage your profile.');
+        showPage('authPage');
+        return;
+      }
+
       const name = document.getElementById('name').value;
       const course = document.getElementById('course').value;
       const contact = document.getElementById('contact').value;
       const about = document.getElementById('about').value;
       const photoInput = document.getElementById('photo');
-      let photoURL = "";
+      const currentPhoto = document.getElementById('currentPhotoURL').value;
+      let photoURL = currentPhoto || "";
+
+      if (!name || !course || !contact) {
+        alert('Please fill in name, course, and contact');
+        return;
+      }
 
       if (photoInput.files[0]) {
         const reader = new FileReader();
@@ -275,18 +368,30 @@
       } else { saveProfile(); }
 
       function saveProfile() {
-        if(!name || !course || !contact){ alert('Please fill in name, course, and contact'); return; }
-        profilesRef.push({ name, course, contact, about, photo: photoURL });
+        const profileData = {
+          name,
+          course,
+          contact,
+          about,
+          photo: photoURL,
+          userId: currentUser.uid,
+          email: currentUser.email
+        };
+
+        profilesRef.child(currentUser.uid).set(profileData);
+        document.getElementById('successMsg').textContent = '✅ Profile saved successfully. Go to Profiles to view it.';
         document.getElementById('successMsg').style.display = 'block';
-setTimeout(() => {
-  document.getElementById('successMsg').style.display = 'none';
-}, 3000);
+        setTimeout(() => {
+          document.getElementById('successMsg').style.display = 'none';
+          document.getElementById('successMsg').textContent = '✅ Profile added successfully. Go to Profiles to view it.';
+        }, 3000);
 
         document.getElementById('name').value='';
         document.getElementById('course').value='';
         document.getElementById('contact').value='';
         document.getElementById('about').value='';
         document.getElementById('photo').value='';
+        document.getElementById('currentPhotoURL').value='';
       }
     }
 
@@ -299,6 +404,201 @@ setTimeout(() => {
       reader.readAsDataURL(file);
     }
 
+    function getChatRoomId(uid1, uid2) {
+      return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+    }
+
+    function openChat(userId, displayName) {
+      if (!currentUser) {
+        alert('Please sign in to open chat.');
+        showPage('authPage');
+        return;
+      }
+      if (currentUser.uid === userId) {
+        alert('You cannot chat with yourself.');
+        return;
+      }
+      activeChatUserId = userId;
+      document.getElementById('chatTitle').textContent = `Chat with ${displayName}`;
+      document.getElementById('chatMessages').innerHTML = '<p style="color:#555;">Loading messages...</p>';
+      if (currentChatRef) {
+        currentChatRef.off();
+      }
+      const roomId = getChatRoomId(currentUser.uid, userId);
+      currentChatRef = messagesRef.child(roomId);
+      currentChatRef.on('value', renderMessages);
+      showPage('chatPage');
+    }
+
+    function sendMessage() {
+      if (!currentUser) {
+        alert('Please sign in to send messages.');
+        showPage('authPage');
+        return;
+      }
+      if (!activeChatUserId) {
+        alert('Select a student in the inbox first.');
+        return;
+      }
+      const textInput = document.getElementById('chatInput');
+      const text = textInput.value.trim();
+      if (!text) return;
+      const roomId = getChatRoomId(currentUser.uid, activeChatUserId);
+      const messageData = {
+        sender: currentUser.uid,
+        senderEmail: currentUser.email,
+        text,
+        timestamp: Date.now()
+      };
+      messagesRef.child(roomId).push(messageData);
+      textInput.value = '';
+    }
+
+    function renderMessages(snapshot) {
+      const messages = snapshot.val();
+      const container = document.getElementById('chatMessages');
+      container.innerHTML = '';
+      if (!messages) {
+        container.innerHTML = '<p style="color:#555;">No messages yet. Start the conversation!</p>';
+        return;
+      }
+      const sorted = Object.values(messages).sort((a,b)=>a.timestamp-b.timestamp);
+      sorted.forEach(msg => {
+        const isMe = currentUser && msg.sender === currentUser.uid;
+        const msgEl = document.createElement('div');
+        msgEl.style.marginBottom = '10px';
+        msgEl.style.textAlign = isMe ? 'right' : 'left';
+        msgEl.innerHTML = `
+          <div style="display:inline-block; text-align:left; max-width:80%; padding:10px 14px; border-radius:16px; background:${isMe ? '#1e88e5' : '#e3f2fd'}; color:${isMe ? '#fff' : '#1e2e55'};">
+            <div style="font-size:13px; margin-bottom:5px;"><strong>${isMe ? 'You' : msg.senderEmail || 'Student'}</strong></div>
+            <div style="font-size:15px; line-height:1.4;">${msg.text}</div>
+            <div style="font-size:11px; opacity:0.7; margin-top:6px;">${new Date(msg.timestamp).toLocaleString()}</div>
+          </div>
+        `;
+        container.appendChild(msgEl);
+      });
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function updatePresenceMap(snapshot) {
+      const data = snapshot.val() || {};
+      Object.keys(presenceMap).forEach(key => delete presenceMap[key]);
+      Object.entries(data).forEach(([uid, value]) => {
+        presenceMap[uid] = value && value.online;
+      });
+      if (lastProfilesSnapshot) {
+        renderInbox(lastProfilesSnapshot);
+      }
+    }
+
+    function renderInbox(snapshot) {
+      const chatList = document.getElementById('chatList');
+      chatList.innerHTML = '';
+      if (!currentUser) {
+        chatList.innerHTML = '<p style="color:#555;">Please sign in to view and message students.</p>';
+        return;
+      }
+      const profiles = snapshot.val();
+      if (!profiles) {
+        chatList.innerHTML = '<p style="color:#555;">No students available yet.</p>';
+        return;
+      }
+      Object.entries(profiles).forEach(([uid, profile]) => {
+        if (uid === currentUser.uid) return;
+        if (profile.banned && !isAdmin()) return;
+        const online = presenceMap[uid] ? '🟢' : '⚪';
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.style.width = '100%';
+        card.style.textAlign = 'left';
+        card.style.padding = '12px 14px';
+        card.style.border = '1px solid #d0d7df';
+        card.style.borderRadius = '10px';
+        card.style.background = '#fff';
+        card.style.cursor = 'pointer';
+        card.onmouseover = () => card.style.background = '#f1f7ff';
+        card.onmouseout = () => card.style.background = '#fff';
+        card.onclick = () => openChat(uid, profile.name || profile.email || 'Student');
+        card.innerHTML = `<strong>${profile.name || profile.email || 'Student'}</strong><br><span style="font-size:13px;color:#555;">${online} ${profile.course || 'No course info'}</span>`;
+        chatList.appendChild(card);
+      });
+    }
+
+    function isAdmin() {
+      return currentUser && adminEmails.includes(currentUser.email);
+    }
+
+    function updateAdminUI() {
+      const adminBtn = document.getElementById('adminNavBtn');
+      if (isAdmin()) {
+        adminBtn.style.display = 'inline-flex';
+        if (lastProfilesSnapshot) {
+          renderAdminPanel(lastProfilesSnapshot);
+        }
+      } else {
+        adminBtn.style.display = 'none';
+      }
+    }
+
+    function renderAdminPanel(snapshot) {
+      const profiles = snapshot.val() || {};
+      const allStudents = Object.keys(profiles).length;
+      const bannedCount = Object.values(profiles).filter(p => p.banned).length;
+      document.getElementById('adminTotalStudents').textContent = allStudents;
+      document.getElementById('adminBannedCount').textContent = bannedCount;
+      const list = document.getElementById('adminProfileList');
+      list.innerHTML = '';
+      Object.entries(profiles).forEach(([uid, profile]) => {
+        const panel = document.createElement('div');
+        panel.style.border = '1px solid #d0d7df';
+        panel.style.borderRadius = '12px';
+        panel.style.padding = '14px';
+        panel.style.background = '#fff';
+        panel.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:start; gap:12px; flex-wrap:wrap;">
+            <div style="min-width:220px;">
+              <strong>${profile.name || profile.email || 'Unknown Student'}</strong>
+              <p style="margin:6px 0 0; color:#555; font-size:13px;">${profile.course || 'No course info'}</p>
+              <p style="margin:6px 0 0; color:#999; font-size:12px;">${profile.email || ''}</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+              <button onclick="toggleBan('${uid}', ${profile.banned ? 'true' : 'false'})" style="background:${profile.banned ? '#ffb4b4' : '#f0f4ff'}; color:${profile.banned ? '#b00020' : '#1e3e7f'}; border:none; border-radius:8px; padding:8px 12px; cursor:pointer;">${profile.banned ? 'Unban' : 'Ban'}</button>
+              <button onclick="deleteProfile('${uid}')" style="background:#ff6f61; color:white; border:none; border-radius:8px; padding:8px 12px; cursor:pointer;">Delete</button>
+            </div>
+          </div>
+        `;
+        list.appendChild(panel);
+      });
+    }
+
+    function deleteProfile(uid) {
+      if (!isAdmin()) {
+        alert('Admin access required.');
+        return;
+      }
+      if (!confirm('Delete this profile permanently?')) return;
+      profilesRef.child(uid).remove();
+      const partnerId = currentUser ? currentUser.uid : null;
+      if (partnerId) {
+        const roomId = getChatRoomId(uid, partnerId);
+        messagesRef.child(roomId).remove();
+      }
+      if (lastProfilesSnapshot) {
+        renderAdminPanel(lastProfilesSnapshot);
+      }
+    }
+
+    function toggleBan(uid, currentState) {
+      if (!isAdmin()) {
+        alert('Admin access required.');
+        return;
+      }
+      profilesRef.child(uid).update({ banned: !currentState });
+      if (lastProfilesSnapshot) {
+        renderAdminPanel(lastProfilesSnapshot);
+      }
+    }
+
     function searchProfiles() {
       const searchText=document.getElementById('search').value.toLowerCase();
       document.querySelectorAll('#profiles .card').forEach(card=>{
@@ -307,29 +607,34 @@ setTimeout(() => {
       });
     }
 
-    window.onload=function() {
-      document.getElementById('welcomeModal').style.display='flex';
-      profilesRef.on('value', snapshot=>{
-        const profilesContainer=document.getElementById('profiles');
-        profilesContainer.innerHTML='';
-        const profiles=snapshot.val();
-        if(profiles){
-          Object.entries(profiles).forEach(([key, profile])=>{
-            const profileDiv=document.createElement('div');
-            profileDiv.className='card';
-            let photoSection='';
-            if(profile.photo && profile.photo!==""){
-              // Add onclick to open lightbox
-              photoSection=`<img src="${profile.photo}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;cursor:pointer;" onclick="openLightbox('${profile.photo}')">`;
-            } else {
+    function renderProfiles(snapshot) {
+      lastProfilesSnapshot = snapshot;
+      const profilesContainer=document.getElementById('profiles');
+      profilesContainer.innerHTML='';
+      const profiles=snapshot.val();
+      if(profiles){
+        Object.entries(profiles).forEach(([key, profile])=>{
+          if (profile.banned && !isAdmin()) return;
+          const profileDiv=document.createElement('div');
+          profileDiv.className='card';
+          let photoSection='';
+          if(profile.photo && profile.photo!==""){
+            photoSection=`<img src="${profile.photo}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;cursor:pointer;" onclick="openLightbox('${profile.photo}')">`;
+} else if (currentUser && profile.userId === currentUser.uid) {
               photoSection=`<label for="photo-${key}" style="cursor:pointer; font-size:12px; color:#1e88e5; font-weight:bold; display:inline-block; border:1px solid #1e88e5; padding:4px 6px; border-radius:4px;">+ Add Photo</label>
                 <input type="file" id="photo-${key}" accept="image/*" style="display:none;" onchange="uploadPhoto('${key}')">`;
-            }
+            } else {
+              photoSection=`<div style="width:60px;height:60px;border-radius:50%;background:#e3f2fd;display:flex;align-items:center;justify-content:center;color:#1565c0;font-size:12px;">No Photo</div>`;
+          }
 
-            profileDiv.innerHTML=`
-              <div style="display:flex; align-items:center; gap:12px;">
+          const editButton = currentUser && profile.userId === currentUser.uid
+            ? `<button onclick="editUserProfile('${key}')" style="margin-top:12px; background:#1565c0; color:white; border:none; border-radius:8px; padding:10px 14px; cursor:pointer;">Edit Your Profile</button>`
+            : '';
+
+          profileDiv.innerHTML=`
+              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                 ${photoSection}
-                <div style="flex:1;">
+                <div style="flex:1; min-width:220px;">
                   <h3 style="margin:0; font-size:16px;">${profile.name}</h3>
                   <p style="margin:2px 0; font-size:14px;"><strong>Course:</strong> ${profile.course}</p>
                   <p style="margin:2px 0; font-size:14px;">
@@ -342,17 +647,169 @@ setTimeout(() => {
 </p>
                   <p style="margin:2px 0; font-size:14px;">${profile.about}</p>
                 </div>
-              </div>`;
-            profilesContainer.appendChild(profileDiv);
-          });
+              </div>
+              ${editButton}`;
+          profilesContainer.appendChild(profileDiv);
+        });
+      }
+    }
+
+    window.onload=function() {
+      document.getElementById('welcomeModal').style.display='flex';
+      auth.onAuthStateChanged(user=>{
+        currentUser=user;
+        updateAuthUI();
+        if(user){
+          setUserPresence(user.uid);
+          loadOwnProfile();
+        } else {
+          clearProfileForm();
         }
+        if(lastProfilesSnapshot){
+          renderProfiles(lastProfilesSnapshot);
+          renderInbox(lastProfilesSnapshot);
+        }
+      });
+      profilesRef.on('value', snapshot=>{
+        lastProfilesSnapshot=snapshot;
+        renderProfiles(snapshot);
+        renderInbox(snapshot);
+        if (isAdmin()) {
+          renderAdminPanel(snapshot);
+        }
+      });
+      presenceRef.on('value', snapshot=>{
+        updatePresenceMap(snapshot);
       });
     }
 
     function closeWelcome(){ document.getElementById('welcomeModal').style.display='none'; }
     function showPage(pageId){
+      if (pageId === 'profilePage' && !currentUser) {
+        alert('Please sign in to add or edit your profile.');
+        pageId = 'authPage';
+      }
+      if (pageId === 'adminPage' && !isAdmin()) {
+        alert('Admin access required.');
+        pageId = 'homePage';
+      }
       document.querySelectorAll('.page').forEach(page=>page.style.display='none');
       document.getElementById(pageId).style.display='block';
+    }
+
+    function updateAuthUI() {
+      const status = document.getElementById('authStatus');
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (currentUser) {
+        status.textContent = `Signed in as ${currentUser.email}`;
+        logoutBtn.style.display = 'inline-flex';
+      } else {
+        status.textContent = 'Not signed in';
+        logoutBtn.style.display = 'none';
+      }
+      updateAdminUI();
+    }
+
+    function signUp() {
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+      if (!email || !password || !confirmPassword) {
+        alert('Please fill in all registration fields.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        alert('Passwords do not match.');
+        return;
+      }
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          alert('Account created successfully. You can now add your profile.');
+          showPage('profilePage');
+        })
+        .catch(error => alert(error.message));
+    }
+
+    function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      if (!email || !password) {
+        alert('Please enter email and password.');
+        return;
+      }
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          alert('Logged in successfully.');
+          showPage('profilePage');
+        })
+        .catch(error => alert(error.message));
+    }
+
+    function setUserPresence(uid) {
+      const connectedRef = database.ref('.info/connected');
+      const userPresenceRef = presenceRef.child(uid);
+      connectedRef.on('value', snap => {
+        if (snap.val() === true) {
+          userPresenceRef.onDisconnect().set({ online: false, lastSeen: Date.now() });
+          userPresenceRef.set({ online: true, lastSeen: Date.now() });
+        }
+      });
+    }
+
+    function logout() {
+      auth.signOut()
+        .then(() => {
+          alert('You have been logged out.');
+          showPage('homePage');
+        })
+        .catch(error => alert(error.message));
+    }
+
+    function loadOwnProfile() {
+      if (!currentUser) { return; }
+      profilesRef.child(currentUser.uid).once('value').then(snapshot => {
+        const profile = snapshot.val();
+        if (!profile) {
+          clearProfileForm();
+          return;
+        }
+        document.getElementById('name').value = profile.name || '';
+        document.getElementById('course').value = profile.course || '';
+        document.getElementById('contact').value = profile.contact || '';
+        document.getElementById('about').value = profile.about || '';
+        document.getElementById('currentPhotoURL').value = profile.photo || '';
+      });
+    }
+
+    function clearProfileForm() {
+      document.getElementById('name').value = '';
+      document.getElementById('course').value = '';
+      document.getElementById('contact').value = '';
+      document.getElementById('about').value = '';
+      document.getElementById('photo').value = '';
+      document.getElementById('currentPhotoURL').value = '';
+    }
+
+    function editUserProfile(key) {
+      if (!currentUser) {
+        alert('Please sign in to edit your profile.');
+        showPage('authPage');
+        return;
+      }
+      profilesRef.child(key).once('value').then(snapshot => {
+        const profile = snapshot.val();
+        if (!profile) { return; }
+        document.getElementById('name').value = profile.name || '';
+        document.getElementById('course').value = profile.course || '';
+        document.getElementById('contact').value = profile.contact || '';
+        document.getElementById('about').value = profile.about || '';
+        document.getElementById('currentPhotoURL').value = profile.photo || '';
+        showPage('profilePage');
+      });
     }
 
     // Lightbox functions
