@@ -187,7 +187,7 @@
           <button onclick="login()">Login</button>
           <div style="margin-top:8px;">
             <input type="text" id="claimPhoneAuth" placeholder="Enter phone to claim profile" style="width:100%; margin-bottom:8px;">
-            <button onclick="claimProfileByPhone(document.getElementById('claimPhoneAuth').value)" style="background:#1565c0;">Claim Profile</button>
+            <button type="button" onclick="claimProfileByPhone(document.getElementById('claimPhoneAuth').value.trim())" style="background:#1565c0;">Claim Profile</button>
           </div>
         </div>
         <div style="flex:1; min-width:260px;">
@@ -236,7 +236,7 @@
       <button onclick="addProfile()">Save Profile</button>
       <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
         <input type="text" id="claimPhoneProfile" placeholder="Phone to claim existing profile" style="flex:1; min-width:180px; padding:10px 12px; border:1px solid #ccc; border-radius:8px;">
-        <button onclick="claimProfileByPhone(document.getElementById('claimPhoneProfile').value)" style="background:#f0ad4e;">Claim Existing Profile</button>
+        <button type="button" onclick="claimProfileByPhone(document.getElementById('claimPhoneProfile').value.trim())" style="background:#f0ad4e;">Claim Existing Profile</button>
       </div>
       <p id="successMsg" style="display:none; color:green; font-weight:bold; margin-top:10px;">
   ✅ Profile added successfully. Go to Profiles to view it.
@@ -704,6 +704,11 @@
 
     // Claim profile by phone prompt or provided phone string
     function claimProfileByPhone(phoneInput) {
+      if (!currentUser && auth.currentUser) {
+        currentUser = auth.currentUser;
+        updateAuthUI();
+      }
+
       if (!currentUser) {
         alert('Please sign in first to claim a profile.');
         showPage('authPage');
