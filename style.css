@@ -983,3 +983,44 @@ html.dark-mode #welcomeModal .close-btn:hover {
 }
 
 #photoLightbox .close-lightbox:hover { background: var(--primary-dark); }
+
+/* Mobile page adjustments: treat each `.page` as a separate full view on small screens */
+@media only screen and (max-width: 640px) {
+  /* ensure content isn't hidden behind the fixed mobile nav */
+  body { padding-bottom: 92px; }
+  main { padding-bottom: 110px; }
+
+  /* simplify home: hide wide dashboard grid and surface a compact action view */
+  .dashboard-grid { display: none; }
+  .home-action-row { display: flex; }
+
+  /* make page cards feel like full-screen views */
+  .card.page {
+    border-radius: 12px;
+    margin: 10px 0;
+    padding: 18px;
+    box-shadow: none;
+    border: 1px solid rgba(15,23,42,0.04);
+  }
+
+  /* ensure each page uses most of the viewport height */
+  .page {
+    min-height: calc(100vh - 120px);
+    padding-bottom: 18px;
+  }
+
+  /* compact mobile nav: show icons primarily */
+  .mobile-nav button span { display: none; }
+  .mobile-nav button i { font-size: 18px; }
+
+  /* chat layout: stack inbox above messages and increase message area height */
+  #chatList { max-height: 22vh; overflow: auto; margin-bottom: 8px; }
+  #chatMessages { min-height: 42vh; max-height: 56vh; }
+  .chat-box { min-height: 38vh; max-height: 56vh; }
+
+  /* tighter inputs/buttons on mobile */
+  input, textarea, button { font-size: 15px; }
+
+  /* hide footer on mobile to prioritize app screens */
+  footer { display: none; }
+}
