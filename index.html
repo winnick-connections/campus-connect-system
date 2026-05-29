@@ -729,6 +729,20 @@
       color: #ffffff;
     }
 
+    .home-action-row {
+      display: none;
+      gap: 10px;
+      margin: 16px 0 0;
+      flex-wrap: wrap;
+    }
+
+    .home-action-row button {
+      flex: 1 1 36%;
+      min-width: 120px;
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+
     @media only screen and (max-width: 880px) {
       .topbar {
         grid-template-columns: 1fr;
@@ -745,6 +759,12 @@
     }
 
     @media only screen and (max-width: 640px) {
+      .home-action-row {
+        display: flex;
+      }
+      .home-action-row button {
+        width: auto;
+      }
       main { padding: 22px 16px 88px; }
       .card { padding: 18px; }
       .feature-card { min-height: auto; }
@@ -969,6 +989,11 @@
           <p>Browse profiles, launch chats, and stay connected with a modern campus dashboard.</p>
         </div>
         <button class="secondary-btn" onclick="showPage('profilesPage')">Browse profiles</button>
+      </div>
+      <div class="home-action-row">
+        <button class="secondary-btn" onclick="showPage('profilesPage')">Profiles</button>
+        <button class="secondary-btn" onclick="showPage('chatPage', true, true)">Chat</button>
+        <button class="secondary-btn" onclick="showPage('profilePage')">Add Profile</button>
       </div>
       <div class="dashboard-grid">
         <div class="dashboard-sidebar">
