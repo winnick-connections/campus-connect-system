@@ -162,6 +162,7 @@ function openChatRoom(roomId, displayName) {
   }
   currentChatRef = messagesRef.child(roomId);
   currentChatRef.on('value', renderMessages);
+  updateChatConversationHeader();
 }
 
 function getChatPeerId(roomId) {
@@ -208,10 +209,10 @@ function renderMessages(snapshot) {
     msgEl.style.marginBottom = '10px';
     msgEl.style.textAlign = isMe ? 'right' : 'left';
     msgEl.innerHTML = `
-      <div style="display:inline-block; text-align:left; max-width:80%; padding:10px 14px; border-radius:16px; background:${isMe ? '#1e88e5' : '#e3f2fd'}; color:${isMe ? '#fff' : '#1e2e55'};">
+      <div style="display:inline-block; text-align:left; max-width:82%; padding:10px 14px; border-radius:16px; background:${isMe ? '#1e88e5' : '#f3f4f6'}; color:${isMe ? '#fff' : '#111827'}; box-shadow:0 6px 16px rgba(15,23,42,0.06);">
         <div style="font-size:13px; margin-bottom:5px;"><strong>${isMe ? 'You' : msg.senderEmail || 'Student'}</strong></div>
         <div style="font-size:15px; line-height:1.4;">${msg.text}</div>
-        <div style="font-size:11px; opacity:0.7; margin-top:6px;">${new Date(msg.timestamp).toLocaleString()}</div>
+        <div style="font-size:11px; opacity:0.75; margin-top:6px;">${new Date(msg.timestamp).toLocaleString()}</div>
       </div>
     `;
     container.appendChild(msgEl);
@@ -253,17 +254,79 @@ function renderInbox(snapshot) {
     card.className = 'chat-item-btn';
     card.onclick = () => openChat(uid, profile.name || profile.email || 'Student');
     card.innerHTML = `
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <div style="text-align:left;">
-          <div style="font-size:15px; font-weight:700; color:#1565c0;">${profile.name || profile.email || 'Student'}</div>
-          <div style="font-size:13px; color:#666; margin-top:4px;">${profile.course || ''}</div>
+      <div class="chat-item-main">
+        <img class="chat-item-photo" src="${profile.photo || ''}" alt="${profile.name || 'Student'}" onerror="this.style.display='none'">
+        <div class="chat-item-profile">
+          <div class="chat-item-name">${profile.name || profile.email || 'Student'}</div>
+          <div class="chat-item-course">${profile.course || ''}</div>
         </div>
-        <div style="font-size:14px;">${online}</div>
-      </div>`;
+      </div>
+      <div class="chat-item-status">${online}</div>`;
     chatList.appendChild(card);
   });
   chatLoaded = true;
   hideLoadingPopup();
+}
+
+function showChatListView() {
+  const listPanel = document.getElementById('chatListPanel');
+  const convoPanel = document.getElementById('chatConversationPanel');
+  const messagesBox = document.getElementById('chatMessages');
+  if (window.innerWidth <= 900) {
+    if (listPanel) listPanel.classList.add('active');
+    if (convoPanel) convoPanel.classList.remove('active');
+    if (listPanel) listPanel.style.display = 'flex';
+    if (convoPanel) convoPanel.style.display = 'none';
+  } else {
+    if (listPanel) listPanel.classList.add('active');
+    if (convoPanel) convoPanel.classList.remove('active');
+    if (listPanel) listPanel.style.display = 'flex';
+    if (convoPanel) convoPanel.style.display = 'flex';
+    if (messagesBox && !activeChatUserId) {
+      messagesBox.innerHTML = '<div class="chat-empty-state">Select a student from the list to view the conversation.</div>';
+    }
+  }
+}
+
+function showChatConversationView() {
+  const listPanel = document.getElementById('chatListPanel');
+  const convoPanel = document.getElementById('chatConversationPanel');
+  if (window.innerWidth <= 900) {
+    if (listPanel) listPanel.classList.remove('active');
+    if (convoPanel) convoPanel.classList.add('active');
+    if (listPanel) listPanel.style.display = 'none';
+    if (convoPanel) convoPanel.style.display = 'flex';
+  } else {
+    if (listPanel) listPanel.classList.remove('active');
+    if (convoPanel) convoPanel.classList.add('active');
+    if (listPanel) listPanel.style.display = 'flex';
+    if (convoPanel) convoPanel.style.display = 'flex';
+  }
+}
+
+function updateChatConversationHeader() {
+  const photoEl = document.getElementById('chatProfilePhoto');
+  const titleEl = document.getElementById('chatTitle');
+  const statusEl = document.getElementById('chatStatus');
+  if (!photoEl || !titleEl || !statusEl) return;
+  if (!activeChatUserId) {
+    titleEl.textContent = 'Select a student';
+    statusEl.textContent = 'Choose a student to start chatting';
+    photoEl.style.display = 'none';
+    return;
+  }
+  const profile = lastProfilesSnapshot?.val()?.[activeChatUserId] || {};
+  const name = profile.name || profile.email || 'Student';
+  const course = profile.course || '';
+  const online = presenceMap[activeChatUserId] ? 'Online now' : 'Offline';
+  titleEl.textContent = name;
+  statusEl.textContent = course ? `${course} • ${online}` : online;
+  if (profile.photo) {
+    photoEl.src = profile.photo;
+    photoEl.style.display = 'block';
+  } else {
+    photoEl.style.display = 'none';
+  }
 }
 
 function searchProfiles() {
@@ -338,7 +401,7 @@ window.onload=function() {
   }
   updateDarkModeIcon();
 
-  const initialPage = window.location.hash ? window.location.hash.replace('#', '') : 'homePage';
+  const initialPage = window.location.hash ? window.location.hash.replace('#', '') : (auth.currentUser ? 'homePage' : 'authPage');
   if (initialPage && document.getElementById(initialPage)) {
     showPage(initialPage, false);
   }
@@ -351,8 +414,10 @@ window.onload=function() {
       setUserPresence(user.uid);
       loadOwnProfile();
       linkProfileIfExistsByEmail(user);
+      showPage('homePage', false);
     } else {
       clearProfileForm();
+      showPage('authPage', false);
     }
     if(lastProfilesSnapshot){
       renderProfiles(lastProfilesSnapshot);
@@ -455,6 +520,13 @@ function showPage(pageId, pushState = true, openUnread = false){
     } else {
       hideLoadingPopup();
     }
+    if (openUnread && unreadChatRooms.length > 0) {
+      showChatConversationView();
+    } else if (activeChatUserId) {
+      showChatConversationView();
+    } else {
+      showChatListView();
+    }
   }
   document.querySelectorAll('.page').forEach(page => {
     page.classList.remove('active');
@@ -490,16 +562,64 @@ window.addEventListener('popstate', event => {
   }
 });
 
+function updateHomeWelcome() {
+  const heading = document.getElementById('homeWelcomeHeading');
+  const subtext = document.getElementById('homeWelcomeSubtitle');
+  if (!heading) return;
+
+  if (currentUser?.displayName) {
+    heading.textContent = `Welcome back, ${currentUser.displayName}`;
+  } else if (currentUser?.email) {
+    const emailName = currentUser.email.split('@')[0];
+    heading.textContent = `Welcome back, ${emailName}`;
+  } else {
+    heading.textContent = 'Welcome to Campus Connect';
+  }
+
+  if (subtext) {
+    subtext.textContent = currentUser
+      ? 'Create your profile, browse students, and start meaningful conversations from one place.'
+      : 'Create your profile, browse students, and start meaningful conversations from one place.';
+  }
+
+  if (currentUser) {
+    profilesRef.child(currentUser.uid).once('value').then(snapshot => {
+      const profile = snapshot.val();
+      if (profile?.name && heading.textContent === 'Welcome to Campus Connect') {
+        heading.textContent = `Welcome back, ${profile.name}`;
+      }
+    });
+  }
+}
+
 function updateAuthUI() {
   const status = document.getElementById('authStatus');
   const logoutBtn = document.getElementById('logoutBtn');
+  const guestAuthActions = document.getElementById('guestAuthActions');
+  const headerSearchBar = document.getElementById('headerSearchBar');
+  const headerAuthInfo = document.getElementById('headerAuthInfo');
+  const mainNav = document.querySelector('.nav-links');
+  const mobileNav = document.querySelector('.mobile-nav');
+
   if (currentUser) {
     status.textContent = `Signed in as ${currentUser.email}`;
     logoutBtn.style.display = 'inline-flex';
+    guestAuthActions.style.display = 'none';
+    headerSearchBar.style.display = 'none';
+    headerAuthInfo.style.display = 'flex';
+    mainNav.style.display = 'none';
+    mobileNav.style.display = 'flex';
   } else {
     status.textContent = 'Not signed in';
     logoutBtn.style.display = 'none';
+    guestAuthActions.style.display = 'flex';
+    headerSearchBar.style.display = 'none';
+    headerAuthInfo.style.display = 'none';
+    mainNav.style.display = 'none';
+    mobileNav.style.display = 'none';
   }
+
+  updateHomeWelcome();
 }
 
 function signUp() {
