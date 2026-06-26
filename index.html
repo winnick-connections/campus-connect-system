@@ -23,84 +23,64 @@
           <div class="subtitle">A modern campus network for students</div>
         </div>
       </div>
-      <div class="search-bar">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input id="headerSearch" type="search" placeholder="Search profiles, courses, chats" oninput="searchProfilesHeader(this.value)">
-      </div>
-      <div class="auth-info">
-        <button id="darkModeToggle" class="icon-btn" onclick="toggleDarkMode()" title="Toggle dark mode">
-          <i class="fa-solid fa-moon"></i>
-        </button>
-        <span id="authStatus" class="auth-badge">Not signed in</span>
-        <button id="logoutBtn" class="secondary-btn" onclick="logout()" style="display:none;">Logout</button>
+      <div class="header-actions">
+        <div id="guestAuthActions" class="auth-actions" style="display:flex; gap:10px;">
+          <button class="secondary-btn" onclick="showPage('authPage')">Login</button>
+          <button onclick="showPage('authPage')">Sign Up</button>
+        </div>
+        <div class="search-bar" id="headerSearchBar" style="display:none;">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input id="headerSearch" type="search" placeholder="Search profiles, courses, chats" oninput="searchProfilesHeader(this.value)">
+        </div>
+        <div class="auth-info" id="headerAuthInfo" style="display:none;">
+          <button id="darkModeToggle" class="icon-btn" onclick="toggleDarkMode()" title="Toggle dark mode">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+          <span id="authStatus" class="auth-badge">Not signed in</span>
+          <button id="logoutBtn" class="secondary-btn" onclick="logout()" style="display:none;">Logout</button>
+        </div>
       </div>
     </div>
-    <div class="nav-links">
+    <div class="nav-links" style="display:none;">
       <button data-page="homePage" class="active" onclick="showPage('homePage')">Home</button>
-      <button data-page="profilePage" onclick="showPage('profilePage')">Add Profile</button>
       <button data-page="profilesPage" onclick="showPage('profilesPage')">Profiles</button>
       <button data-page="chatPage" onclick="showPage('chatPage', true, true)">Chat <span id="chatNotificationBadge" class="badge hidden">0</span></button>
       <button data-page="aboutPage" onclick="showPage('aboutPage')">About</button>
-      <button data-page="authPage" onclick="showPage('authPage')">Login / Register</button>
+      <button onclick="logout()">Logout</button>
     </div>
-    <div class="mobile-nav">
+    <div class="mobile-nav" style="display:none;">
       <button data-page="homePage" class="active" onclick="showPage('homePage')"><i class="fa-solid fa-house"></i><span>Home</span></button>
       <button data-page="profilesPage" onclick="showPage('profilesPage')"><i class="fa-solid fa-users"></i><span>Profiles</span></button>
       <button data-page="chatPage" onclick="showPage('chatPage', true, true)"><i class="fa-solid fa-comments"></i><span>Chat</span></button>
-      <button data-page="profilePage" onclick="showPage('profilePage')"><i class="fa-solid fa-user-pen"></i><span>Add</span></button>
+      <button onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></button>
     </div>
   </header>
 
   <main>
     <!-- Home Page -->
     <div class="card page hero active" id="homePage">
-      <div class="section-header">
-        <div>
-          <h2>Campus network for student life</h2>
-          <p>Browse profiles, launch chats, and stay connected with a modern campus dashboard.</p>
+      <div class="home-hero">
+        <div class="home-hero-content">
+          <p class="home-eyebrow">Campus Connect</p>
+          <h2 id="homeWelcomeHeading">Welcome to Campus Connect</h2>
+          <p id="homeWelcomeSubtitle" class="home-subtitle">Create your profile, browse students, and start meaningful conversations from one place.</p>
         </div>
-        <button class="secondary-btn" onclick="showPage('profilesPage')">Browse profiles</button>
-      </div>
-      <div class="home-action-row">
-        <button class="secondary-btn" onclick="showPage('profilesPage')">Profiles</button>
-        <button class="secondary-btn" onclick="showPage('chatPage', true, true)">Chat</button>
-        <button class="secondary-btn" onclick="showPage('profilePage')">Add Profile</button>
-      </div>
-      <div class="dashboard-grid">
-        <div class="dashboard-sidebar">
-          <div class="sidebar-card">
-            <h3>Quick actions</h3>
-            <div class="quick-action" onclick="showPage('profilePage')">
-              <span>Add profile</span>
-              <small>Share your campus identity in seconds.</small>
-            </div>
-            <div class="quick-action" onclick="showPage('chatPage')">
-              <span>Open chat</span>
-              <small>Message classmates instantly.</small>
-            </div>
-            <div class="quick-action" onclick="showPage('aboutPage')">
-              <span>Learn more</span>
-              <small>Discover how Campus Connect works.</small>
-            </div>
-          </div>
-          <div class="sidebar-card">
-            <h3>Dashboard insights</h3>
-            <p>Search from the top header to quickly find profiles, courses, or chat contacts. This layout is designed for speed and clarity.</p>
-          </div>
-        </div>
-        <div class="dashboard-feed">
-          <div class="feed-card">
-            <h3>Campus highlights</h3>
-            <p>Welcome to the professional student network experience. Use the search bar above to navigate your campus community faster.</p>
-          </div>
-          <div class="feed-card">
-            <h3>Top features</h3>
-            <ul>
-              <li>Premium two-column dashboard layout</li>
-              <li>Refined header search and streamlined navigation</li>
-              <li>Smart profile and chat access for students</li>
-            </ul>
-          </div>
+        <div class="home-action-grid">
+          <button class="home-action-card" onclick="showPage('profilePage')">
+            <span class="home-action-icon">👤</span>
+            <strong>My Profile</strong>
+            <span>Create or edit your profile.</span>
+          </button>
+          <button class="home-action-card" onclick="showPage('profilesPage')">
+            <span class="home-action-icon">👥</span>
+            <strong>Browse Students</strong>
+            <span>View and search student profiles.</span>
+          </button>
+          <button class="home-action-card" onclick="showPage('chatPage', true, true)">
+            <span class="home-action-icon">💬</span>
+            <strong>Open Chats</strong>
+            <span>Start chatting with other students.</span>
+          </button>
         </div>
       </div>
     </div>
@@ -135,22 +115,37 @@
 
     <!-- Chat Page -->
     <div class="card page" id="chatPage" style="display:none;">
-      <h2>Student Chat</h2>
-      <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:15px;">
-        <div style="flex:1; min-width:260px; max-width:320px;">
-          <h3>Inbox</h3>
-          <div id="chatList" style="display:grid; gap:10px; max-height:420px; overflow:auto; padding:10px 0;"></div>
+      <div class="chat-page-shell">
+        <div class="chat-page-header">
+          <button class="chat-back-btn" onclick="showPage('homePage')">← Home</button>
+          <h2>Chats</h2>
         </div>
-        <div style="flex:2; min-width:260px;">
-          <h3 id="chatTitle">Select a student to chat</h3>
-          <div id="chatMessages" class="chat-box"></div>
-          <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            <input type="text" id="chatInput" class="chat-input" placeholder="Write a message...">
-            <button onclick="sendMessage()">Send</button>
+        <div class="chat-layout">
+          <div id="chatListPanel" class="chat-list-panel">
+            <div class="chat-list-header">
+              <h3>Available students</h3>
+            </div>
+            <div id="chatList" class="chat-list"></div>
+          </div>
+          <div id="chatConversationPanel" class="chat-conversation-panel" style="display:none;">
+            <div class="chat-conversation-header">
+              <button id="chatBackBtn" class="chat-back-btn" onclick="showChatListView()">← Back</button>
+              <div class="chat-profile-meta">
+                <img id="chatProfilePhoto" class="chat-profile-photo" alt="Selected student">
+                <div>
+                  <div id="chatTitle" class="chat-title">Select a student</div>
+                  <div id="chatStatus" class="chat-status">Choose a student to start chatting</div>
+                </div>
+              </div>
+            </div>
+            <div id="chatMessages" class="chat-box"></div>
+            <div class="chat-input-row">
+              <input type="text" id="chatInput" class="chat-input" placeholder="Write a message...">
+              <button class="chat-send-btn" onclick="sendMessage()">Send</button>
+            </div>
           </div>
         </div>
       </div>
-      <p class="muted-text" style="margin-top:15px; font-size:14px;">Use chat to message other students in real time. Online status updates automatically.</p>
     </div>
 
     <!-- Create Profile Page -->
@@ -197,13 +192,16 @@
 
     <!-- Profiles Page -->
     <div class="card page" id="profilesPage" style="display:none;">
-      <h2>Student Profiles</h2>
-      <p style="font-size:13px; color:#2e7d32; margin-top:-10px;">
-  🟢 Live – student profiles update automatically
-</p>
-
-      <input type="text" id="search" placeholder="Search by name or course..." onkeyup="searchProfiles()">
-      <div id="profiles"></div>
+      <div class="profiles-page-shell">
+        <div class="profiles-page-header">
+          <button class="profiles-back-btn" onclick="showPage('homePage')">← Home</button>
+          <h2>Student Profiles</h2>
+        </div>
+        <div class="profiles-search-wrap">
+          <input type="text" id="search" placeholder="Search by name or course..." onkeyup="searchProfiles()">
+        </div>
+        <div id="profiles" class="profiles-grid"></div>
+      </div>
     </div>
   </main>
 
@@ -250,10 +248,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
