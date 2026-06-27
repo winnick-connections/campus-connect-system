@@ -59,29 +59,34 @@
       <div class="home-hero">
         <div class="home-hero-content">
           <p class="home-eyebrow">Campus Connect</p>
-          <h2 id="homeWelcomeHeading">Welcome back,</h2>
-          <h3 id="homeWelcomeName">Campus Connect</h3>
-          <p id="homeWelcomeSubtitle" class="home-subtitle">Connect with students across your campus.</p>
+          <h2 id="homeWelcomeHeading">Welcome to Campus Connect</h2>
+          <p id="homeWelcomeSubtitle" class="home-subtitle">Create your profile, browse students, and start meaningful conversations from one place.</p>
         </div>
-        <div class="home-dashboard-grid">
-          <div class="home-dashboard-card">
-            <div class="home-dashboard-card-icon">👨‍🎓</div>
-            <div class="home-dashboard-card-title">Registered Students</div>
-            <div id="registeredCount" class="home-dashboard-card-value">0</div>
-          </div>
-          <div class="home-dashboard-card">
-            <div class="home-dashboard-card-icon">💬</div>
-            <div class="home-dashboard-card-title">Conversations</div>
-            <div id="conversationsCount" class="home-dashboard-card-value">0</div>
-          </div>
-          <div class="home-dashboard-card">
-            <div class="home-dashboard-card-icon">🟢</div>
-            <div class="home-dashboard-card-title">Online Now</div>
-            <div id="onlineCount" class="home-dashboard-card-value">Coming Soon</div>
+          <div class="dashboard-cards">
+            <div class="dashboard-card">
+              <div class="dashboard-card-icon">👨‍🎓</div>
+              <div>
+                <div class="dashboard-card-title">Registered Students</div>
+                <div id="registeredStudentsCount" class="dashboard-card-value">0</div>
+              </div>
+            </div>
+            <div class="dashboard-card">
+              <div class="dashboard-card-icon">💬</div>
+              <div>
+                <div class="dashboard-card-title">Conversations</div>
+                <div id="conversationsCount" class="dashboard-card-value">0</div>
+              </div>
+            </div>
+            <div class="dashboard-card">
+              <div class="dashboard-card-icon">🟢</div>
+              <div>
+                <div class="dashboard-card-title">Online Now</div>
+                <div id="onlineNowValue" class="dashboard-card-value">Coming Soon</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
     <!-- Auth Page -->
     <div class="card page" id="authPage" style="display:none;">
@@ -232,9 +237,4 @@
     style="position:fixed; bottom:20px; right:20px; display:none; 
            padding:10px 15px; font-size:14px; border:none; 
            border-radius:8px; background:#1e88e5; color:white; 
-           cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,0.2);">
-  ↑ Top
-</button>
-
-</body>
-</html>
+       
