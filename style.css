@@ -239,53 +239,61 @@ html.dark-mode .icon-btn:hover {
   max-width: 720px;
 }
 
-.home-action-grid {
+.home-dashboard-grid {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 24px;
 }
 
-.home-action-card {
+.home-dashboard-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  text-align: left;
+  gap: 12px;
   padding: 22px;
   border: 1px solid var(--border);
   border-radius: 18px;
   background: var(--surface-alt);
   color: var(--text);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.home-action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
-}
-
-.home-action-icon {
+.home-dashboard-card-icon {
+  width: 46px;
+  height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
   border-radius: 14px;
   background: rgba(255, 122, 89, 0.14);
   font-size: 22px;
 }
 
-.home-action-card strong {
-  font-size: 1rem;
+.home-dashboard-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--primary);
 }
 
-.home-action-card span:last-child {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--muted);
+.home-dashboard-card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.home-hero-content h2 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+}
+
+.home-hero-content h3 {
+  margin: 6px 0 0;
+  font-size: clamp(2.4rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.home-hero-content .home-subtitle {
+  margin-top: 16px;
 }
 
 .profiles-page-shell {
@@ -1208,6 +1216,9 @@ html.dark-mode .nav-links button.active {
   .dashboard-feed { gap: 18px; }
 
   .nav-links button { padding: 10px 12px; font-size: 12px; min-width: 80px; }
+  .mobile-nav { padding: 6px 8px; gap: 6px; }
+  .mobile-nav button { padding: 8px 10px; font-size: 11px; }
+  .mobile-nav button i { font-size: 12px; }
 
   #welcomeModal .modal-content {
     padding: 24px;
