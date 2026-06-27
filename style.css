@@ -1496,3 +1496,9 @@ html.dark-mode #welcomeModal .close-btn:hover {
   /* hide footer on mobile to prioritize app screens */
   footer { display: none; }
 }
+
+/* Hide duplicate top Login/Sign Up buttons while preserving functionality elsewhere
+   We use !important so JS-based style toggles cannot show this duplicate UI. */
+#guestAuthActions {
+  display: none !important;
+}
