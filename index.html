@@ -59,25 +59,26 @@
       <div class="home-hero">
         <div class="home-hero-content">
           <p class="home-eyebrow">Campus Connect</p>
-          <h2 id="homeWelcomeHeading">Welcome to Campus Connect</h2>
-          <p id="homeWelcomeSubtitle" class="home-subtitle">Create your profile, browse students, and start meaningful conversations from one place.</p>
+          <h2 id="homeWelcomeHeading">Welcome back,</h2>
+          <h3 id="homeWelcomeName">Campus Connect</h3>
+          <p id="homeWelcomeSubtitle" class="home-subtitle">Connect with students across your campus.</p>
         </div>
-        <div class="home-action-grid">
-          <button class="home-action-card" onclick="showPage('profilePage')">
-            <span class="home-action-icon">👤</span>
-            <strong>My Profile</strong>
-            <span>Create or edit your profile.</span>
-          </button>
-          <button class="home-action-card" onclick="showPage('profilesPage')">
-            <span class="home-action-icon">👥</span>
-            <strong>Browse Students</strong>
-            <span>View and search student profiles.</span>
-          </button>
-          <button class="home-action-card" onclick="showPage('chatPage', true, true)">
-            <span class="home-action-icon">💬</span>
-            <strong>Open Chats</strong>
-            <span>Start chatting with other students.</span>
-          </button>
+        <div class="home-dashboard-grid">
+          <div class="home-dashboard-card">
+            <div class="home-dashboard-card-icon">👨‍🎓</div>
+            <div class="home-dashboard-card-title">Registered Students</div>
+            <div id="registeredCount" class="home-dashboard-card-value">0</div>
+          </div>
+          <div class="home-dashboard-card">
+            <div class="home-dashboard-card-icon">💬</div>
+            <div class="home-dashboard-card-title">Conversations</div>
+            <div id="conversationsCount" class="home-dashboard-card-value">0</div>
+          </div>
+          <div class="home-dashboard-card">
+            <div class="home-dashboard-card-icon">🟢</div>
+            <div class="home-dashboard-card-title">Online Now</div>
+            <div id="onlineCount" class="home-dashboard-card-value">Coming Soon</div>
+          </div>
         </div>
       </div>
     </div>
