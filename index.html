@@ -32,11 +32,7 @@
           <input id="headerSearch" type="search" placeholder="Search profiles, courses, chats" oninput="searchProfilesHeader(this.value)">
         </div>
         <div class="auth-info" id="headerAuthInfo" style="display:none;">
-          <button id="darkModeToggle" class="icon-btn" onclick="toggleDarkMode()" title="Toggle dark mode">
-            <i class="fa-solid fa-moon"></i>
-          </button>
           <span id="authStatus" class="auth-badge">Not signed in</span>
-          <button id="logoutBtn" class="secondary-btn" onclick="logout()" style="display:none;">Logout</button>
         </div>
       </div>
     </div>
@@ -45,12 +41,14 @@
       <button data-page="profilesPage" onclick="showPage('profilesPage')">Profiles</button>
       <button data-page="chatPage" onclick="showPage('chatPage', true, true)">Chat <span id="chatNotificationBadge" class="badge hidden">0</span></button>
       <button data-page="aboutPage" onclick="showPage('aboutPage')">About</button>
+      <button id="darkModeToggle" onclick="toggleDarkMode()">🌙 Dark Mode</button>
       <button onclick="logout()">Logout</button>
     </div>
     <div class="mobile-nav" style="display:none;">
       <button data-page="homePage" class="active" onclick="showPage('homePage')"><i class="fa-solid fa-house"></i><span>Home</span></button>
       <button data-page="profilesPage" onclick="showPage('profilesPage')"><i class="fa-solid fa-users"></i><span>Profiles</span></button>
       <button data-page="chatPage" onclick="showPage('chatPage', true, true)"><i class="fa-solid fa-comments"></i><span>Chat</span></button>
+      <button id="darkModeToggleMobile" onclick="toggleDarkMode()">🌙 Dark Mode</button>
       <button onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></button>
     </div>
   </header>
@@ -93,10 +91,6 @@
           <input type="email" id="loginEmail" placeholder="Email">
           <input type="password" id="loginPassword" placeholder="Password">
           <button onclick="login()">Login</button>
-          <div style="margin-top:8px;">
-            <input type="text" id="claimPhoneAuth" placeholder="Enter phone to claim profile" style="width:100%; margin-bottom:8px;">
-            <button type="button" class="secondary-btn" onclick="claimProfileByPhone(document.getElementById('claimPhoneAuth').value.trim())">Claim Profile</button>
-          </div>
         </div>
         <div style="flex:1; min-width:260px;">
           <h3>Create Account</h3>
@@ -157,10 +151,6 @@
       <input type="file" id="photo" accept="image/*">
       <input type="hidden" id="currentPhotoURL">
       <button onclick="addProfile()">Save Profile</button>
-      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <input type="text" id="claimPhoneProfile" placeholder="Phone to claim existing profile" style="flex:1; min-width:180px; padding:10px 12px; border:1px solid #ccc; border-radius:8px;">
-        <button type="button" class="secondary-btn" onclick="claimProfileByPhone(document.getElementById('claimPhoneProfile').value.trim())">Claim Existing Profile</button>
-      </div>
       <p id="successMsg" style="display:none; color:green; font-weight:bold; margin-top:10px;">
   ✅ Profile added successfully. Go to Profiles to view it.
 </p>
