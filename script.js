@@ -431,13 +431,16 @@ window.onload=function() {
     lastProfilesSnapshot=snapshot;
     renderProfiles(snapshot);
     renderInbox(snapshot);
+    updateHomeDashboard();
   });
   presenceRef.on('value', snapshot=>{
     updatePresenceMap(snapshot);
+    updateHomeDashboard();
   });
   messagesRef.on('value', snapshot => {
     lastMessagesSnapshot = snapshot;
     updateChatNotificationFromSnapshot(snapshot);
+    updateHomeDashboard();
   });
 }
 
@@ -567,31 +570,60 @@ window.addEventListener('popstate', event => {
 
 function updateHomeWelcome() {
   const heading = document.getElementById('homeWelcomeHeading');
+  const nameHeading = document.getElementById('homeWelcomeName');
   const subtext = document.getElementById('homeWelcomeSubtitle');
   if (!heading) return;
 
-  if (currentUser?.displayName) {
-    heading.textContent = `Welcome back, ${currentUser.displayName}`;
-  } else if (currentUser?.email) {
-    const emailName = currentUser.email.split('@')[0];
-    heading.textContent = `Welcome back, ${emailName}`;
-  } else {
-    heading.textContent = 'Welcome to Campus Connect';
+  heading.textContent = 'Welcome back,';
+  if (nameHeading) {
+    if (currentUser?.displayName) {
+      nameHeading.textContent = currentUser.displayName;
+    } else if (currentUser?.email) {
+      nameHeading.textContent = currentUser.email.split('@')[0];
+    } else {
+      nameHeading.textContent = 'Campus Connect';
+    }
   }
 
   if (subtext) {
-    subtext.textContent = currentUser
-      ? 'Create your profile, browse students, and start meaningful conversations from one place.'
-      : 'Create your profile, browse students, and start meaningful conversations from one place.';
+    subtext.textContent = 'Connect with students across your campus.';
   }
 
   if (currentUser) {
     profilesRef.child(currentUser.uid).once('value').then(snapshot => {
       const profile = snapshot.val();
-      if (profile?.name && heading.textContent === 'Welcome to Campus Connect') {
-        heading.textContent = `Welcome back, ${profile.name}`;
+      if (profile?.name && nameHeading) {
+        nameHeading.textContent = profile.name;
       }
     });
+  }
+
+  updateHomeDashboard();
+}
+
+function updateHomeDashboard() {
+  const registeredCount = document.getElementById('registeredCount');
+  const conversationsCount = document.getElementById('conversationsCount');
+  const onlineCount = document.getElementById('onlineCount');
+
+  const profileData = lastProfilesSnapshot ? lastProfilesSnapshot.val() || {} : {};
+  const messageData = lastMessagesSnapshot ? lastMessagesSnapshot.val() || {} : {};
+  const onlineUsers = Object.values(presenceMap).filter(Boolean).length;
+
+  if (registeredCount) {
+    registeredCount.textContent = Object.keys(profileData).length.toLocaleString();
+  }
+  if (conversationsCount) {
+    let conversations = 0;
+    if (currentUser) {
+      conversations = Object.keys(messageData).filter(roomId => roomId.split('_').includes(currentUser.uid)).length;
+    }
+    conversationsCount.textContent = conversations.toLocaleString();
+  }
+  if (onlineCount) {
+    onlineCount.textContent = Object.keys(presenceMap).length > 0
+      ? onlineUsers.toLocaleString()
+      : 'Coming Soon';
   }
 }
 
@@ -742,36 +774,4 @@ function editUserProfile(key) {
     return;
   }
   profilesRef.child(key).once('value').then(snapshot => {
-    const profile = snapshot.val();
-    if (!profile) { return; }
-    document.getElementById('name').value = profile.name || '';
-    document.getElementById('course').value = profile.course || '';
-    document.getElementById('contact').value = profile.contact || '';
-    document.getElementById('about').value = profile.about || '';
-    document.getElementById('currentPhotoURL').value = profile.photo || '';
-    showPage('profilePage');
-  });
-}
-
-function openLightbox(src){
-  document.getElementById('lightboxImg').src=src;
-  document.getElementById('photoLightbox').style.display='flex';
-}
-
-function closeLightbox(){
-  document.getElementById('photoLightbox').style.display='none';
-  document.getElementById('lightboxImg').src='';
-}
-
-window.onscroll = function() {
-  const btn = document.getElementById('backToTop');
-  if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-    btn.style.display = 'block';
-  } else {
-    btn.style.display = 'none';
-  }
-};
-
-function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+ 
