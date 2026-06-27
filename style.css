@@ -799,6 +799,30 @@ html.dark-mode .chat-input {
   font-size: 13px;
 }
 
+/* Mobile: stack dashboard cards vertically while preserving desktop styling */
+@media (max-width: 600px) {
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+    gap: 16px; /* keep equal spacing between cards */
+    padding: 0 16px; /* equal left/right margins so cards nearly fill the screen */
+    margin-top: 10px;
+  }
+
+  .dashboard-card {
+    width: 100%;
+    box-sizing: border-box; /* ensure padding doesn't overflow */
+    padding: 20px; /* keep similar internal spacing to desktop */
+  }
+
+  /* Keep icon size, alignment and appearance identical to desktop */
+  .dashboard-card-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+}
+
 html.dark-mode .overlay-content {
   background: #24272f;
   color: var(--text);
