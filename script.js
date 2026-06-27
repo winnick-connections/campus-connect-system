@@ -774,4 +774,36 @@ function editUserProfile(key) {
     return;
   }
   profilesRef.child(key).once('value').then(snapshot => {
- 
+    const profile = snapshot.val();
+    if (!profile) { return; }
+    document.getElementById('name').value = profile.name || '';
+    document.getElementById('course').value = profile.course || '';
+    document.getElementById('contact').value = profile.contact || '';
+    document.getElementById('about').value = profile.about || '';
+    document.getElementById('currentPhotoURL').value = profile.photo || '';
+    showPage('profilePage');
+  });
+}
+
+function openLightbox(src){
+  document.getElementById('lightboxImg').src=src;
+  document.getElementById('photoLightbox').style.display='flex';
+}
+
+function closeLightbox(){
+  document.getElementById('photoLightbox').style.display='none';
+  document.getElementById('lightboxImg').src='';
+}
+
+window.onscroll = function() {
+  const btn = document.getElementById('backToTop');
+  if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+    btn.style.display = 'block';
+  } else {
+    btn.style.display = 'none';
+  }
+};
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
