@@ -495,9 +495,12 @@ function hideLoadingPopup() {
 }
 
 function updateDarkModeIcon() {
-  const toggle = document.getElementById('darkModeToggle');
+  const desktopToggle = document.getElementById('darkModeToggle');
+  const mobileToggle = document.getElementById('darkModeToggleMobile');
   const isDark = document.documentElement.classList.contains('dark-mode');
-  toggle.querySelector('i').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  const label = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+  if (desktopToggle) desktopToggle.textContent = label;
+  if (mobileToggle) mobileToggle.textContent = label;
 }
 
 function showPage(pageId, pushState = true, openUnread = false){
@@ -594,7 +597,6 @@ function updateHomeWelcome() {
 
 function updateAuthUI() {
   const status = document.getElementById('authStatus');
-  const logoutBtn = document.getElementById('logoutBtn');
   const guestAuthActions = document.getElementById('guestAuthActions');
   const headerSearchBar = document.getElementById('headerSearchBar');
   const headerAuthInfo = document.getElementById('headerAuthInfo');
@@ -603,7 +605,6 @@ function updateAuthUI() {
 
   if (currentUser) {
     status.textContent = `Signed in as ${currentUser.email}`;
-    logoutBtn.style.display = 'inline-flex';
     guestAuthActions.style.display = 'none';
     headerSearchBar.style.display = 'none';
     headerAuthInfo.style.display = 'flex';
@@ -611,7 +612,6 @@ function updateAuthUI() {
     mobileNav.style.display = 'flex';
   } else {
     status.textContent = 'Not signed in';
-    logoutBtn.style.display = 'none';
     guestAuthActions.style.display = 'flex';
     headerSearchBar.style.display = 'none';
     headerAuthInfo.style.display = 'none';
@@ -673,16 +673,6 @@ function login() {
     .catch(error => alert(error.message));
 }
 
-function normalizePhoneNumber(phone) {
-  if (!phone) return '';
-  const digits = phone.replace(/\D/g, '');
-  return digits.slice(-9);
-}
-
-function phoneMatches(a, b) {
-  return normalizePhoneNumber(a) && normalizePhoneNumber(a) === normalizePhoneNumber(b);
-}
-
 function linkProfileIfExistsByEmail(user) {
   if (!user) return;
   profilesRef.once('value').then(snap => {
@@ -697,70 +687,6 @@ function linkProfileIfExistsByEmail(user) {
         });
       }
     });
-  });
-}
-
-function claimProfileByPhone(phoneInput) {
-  if (!currentUser && auth.currentUser) {
-    currentUser = auth.currentUser;
-    updateAuthUI();
-  }
-
-  if (!currentUser) {
-    alert('Please sign in first to claim a profile.');
-    showPage('authPage');
-    return;
-  }
-
-  let phone = phoneInput || prompt('Enter your phone/WhatsApp number:');
-
-  if (!phone) return;
-
-  const localPhone = normalizePhoneNumber(phone);
-  if (!localPhone || localPhone.length < 9) {
-    alert('Phone number must have at least 9 digits.');
-    return;
-  }
-
-  profilesRef.once('value').then(snapshot => {
-    const profiles = snapshot.val() || {};
-
-    let foundKey = null;
-    let foundProfile = null;
-
-    Object.entries(profiles).forEach(([key, profile]) => {
-      if (!profile || !profile.contact) return;
-      if (phoneMatches(profile.contact, localPhone)) {
-        foundKey = key;
-        foundProfile = profile;
-      }
-    });
-
-    if (!foundProfile) {
-      alert(`No profile found with that number. Try again using the same digits as your saved campus profile. Normalized number: ${localPhone}`);
-      return;
-    }
-
-    if (foundKey === currentUser.uid) {
-      alert('This profile is already linked to your account.');
-      loadOwnProfile();
-      return;
-    }
-
-    foundProfile.userId = currentUser.uid;
-    foundProfile.email = currentUser.email || foundProfile.email || '';
-
-    profilesRef.child(currentUser.uid).set(foundProfile)
-      .then(() => {
-        if (foundKey !== currentUser.uid) {
-          profilesRef.child(foundKey).remove();
-        }
-        alert('Profile claimed successfully!');
-        loadOwnProfile();
-      })
-      .catch(error => {
-        alert('Error claiming profile: ' + error.message);
-      });
   });
 }
 
