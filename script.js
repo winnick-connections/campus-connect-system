@@ -570,19 +570,19 @@ window.addEventListener('popstate', event => {
 
 function updateHomeWelcome() {
   const heading = document.getElementById('homeWelcomeHeading');
-  const nameHeading = document.getElementById('homeWelcomeName');
   const subtext = document.getElementById('homeWelcomeSubtitle');
-  if (!heading) return;
+  const eyebrow = document.querySelector('.home-eyebrow');
+  if (!heading || !eyebrow) return;
 
-  heading.textContent = 'Welcome back,';
-  if (nameHeading) {
-    if (currentUser?.displayName) {
-      nameHeading.textContent = currentUser.displayName;
-    } else if (currentUser?.email) {
-      nameHeading.textContent = currentUser.email.split('@')[0];
-    } else {
-      nameHeading.textContent = 'Campus Connect';
-    }
+  eyebrow.textContent = 'Welcome back,';
+
+  if (currentUser?.displayName) {
+    heading.textContent = currentUser.displayName;
+  } else if (currentUser?.email) {
+    const emailName = currentUser.email.split('@')[0];
+    heading.textContent = emailName;
+  } else {
+    heading.textContent = 'Campus Connect';
   }
 
   if (subtext) {
@@ -592,8 +592,8 @@ function updateHomeWelcome() {
   if (currentUser) {
     profilesRef.child(currentUser.uid).once('value').then(snapshot => {
       const profile = snapshot.val();
-      if (profile?.name && nameHeading) {
-        nameHeading.textContent = profile.name;
+      if (profile?.name) {
+        heading.textContent = profile.name;
       }
     });
   }
@@ -602,28 +602,32 @@ function updateHomeWelcome() {
 }
 
 function updateHomeDashboard() {
-  const registeredCount = document.getElementById('registeredCount');
-  const conversationsCount = document.getElementById('conversationsCount');
-  const onlineCount = document.getElementById('onlineCount');
+  const registeredCountEl = document.getElementById('registeredStudentsCount');
+  const conversationsCountEl = document.getElementById('conversationsCount');
+  const onlineNowEl = document.getElementById('onlineNowValue');
 
-  const profileData = lastProfilesSnapshot ? lastProfilesSnapshot.val() || {} : {};
-  const messageData = lastMessagesSnapshot ? lastMessagesSnapshot.val() || {} : {};
-  const onlineUsers = Object.values(presenceMap).filter(Boolean).length;
-
-  if (registeredCount) {
-    registeredCount.textContent = Object.keys(profileData).length.toLocaleString();
+  if (registeredCountEl) {
+    const profiles = lastProfilesSnapshot?.val() || {};
+    registeredCountEl.textContent = Object.keys(profiles).length.toString();
   }
-  if (conversationsCount) {
-    let conversations = 0;
-    if (currentUser) {
-      conversations = Object.keys(messageData).filter(roomId => roomId.split('_').includes(currentUser.uid)).length;
+
+  if (conversationsCountEl) {
+    let count = 0;
+    const messages = lastMessagesSnapshot?.val() || {};
+    if (currentUser && messages) {
+      count = Object.keys(messages).filter(roomId => roomId.includes(currentUser.uid)).length;
     }
-    conversationsCount.textContent = conversations.toLocaleString();
+    conversationsCountEl.textContent = count.toString();
   }
-  if (onlineCount) {
-    onlineCount.textContent = Object.keys(presenceMap).length > 0
-      ? onlineUsers.toLocaleString()
-      : 'Coming Soon';
+
+  if (onlineNowEl) {
+    const presenceKeys = Object.keys(presenceMap);
+    if (presenceKeys.length === 0) {
+      onlineNowEl.textContent = 'Coming Soon';
+    } else {
+      const onlineCount = Object.values(presenceMap).filter(value => value === true).length;
+      onlineNowEl.textContent = onlineCount.toString();
+    }
   }
 }
 
