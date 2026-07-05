@@ -14,7 +14,13 @@ const database = firebase.database();
 const profilesRef = database.ref('profiles');
 const messagesRef = database.ref('messages');
 const presenceRef = database.ref('presence');
+const ADMIN_EMAILS = [
+  "winnickp720@gmail.com",
+  "admin1@example.com",
+  "admin2@example.com"
+];
 let currentUser = null;
+let isAdmin = false;
 let lastProfilesSnapshot = null;
 let lastMessagesSnapshot = null;
 let currentChatRef = null;
@@ -23,6 +29,33 @@ let unreadChatRooms = [];
 let profilesLoaded = false;
 let chatLoaded = false;
 const presenceMap = {};
+
+function isAdminEmail(email) {
+  if (typeof email !== 'string') {
+    return false;
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  return ADMIN_EMAILS.some(adminEmail =>
+    adminEmail.trim().toLowerCase() === normalizedEmail
+  );
+}
+
+function enforceAdminAccess(user) {
+  if (!user) {
+    isAdmin = false;
+    return false;
+  }
+
+  const signedInEmail = user.email || '';
+  isAdmin = isAdminEmail(signedInEmail);
+
+  console.log('Signed in as:', signedInEmail);
+  console.log('Admin list:', ADMIN_EMAILS);
+  console.log('Is Admin:', isAdmin);
+
+  return true;
+}
 
 function addProfile() {
   if (!currentUser) {
@@ -368,6 +401,9 @@ function renderProfiles(snapshot) {
       const editButton = currentUser && profile.userId === currentUser.uid
         ? `<button onclick="editUserProfile('${key}')" style="margin-top:12px; background:#1565c0; color:white; border:none; border-radius:8px; padding:10px 14px; cursor:pointer;">Edit Your Profile</button>`
         : '';
+      const deleteButton = isAdmin && currentUser && profile.userId !== currentUser.uid
+        ? `<button onclick="deleteUserProfile('${key}', this)" style="margin-top:12px; margin-left:8px; background:#dc2626; color:white; border:none; border-radius:8px; padding:10px 14px; cursor:pointer;">Delete Profile</button>`
+        : '';
 
       profileDiv.innerHTML=`
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
@@ -380,13 +416,18 @@ ${profile.contact ? `
   <a href="https://wa.me/260${String(profile.contact).replace(/^0+|[^0-9]/g,'')}" 
      target="_blank" class="whatsapp-btn">
      <i class="fa-brands fa-whatsapp"></i> WhatsApp
-  </a> | <a href="tel:${profile.contact}">Call</a>
+  </a> | <a href="tel:${profile.contact}" class="contact-btn">
+     <i class="fa-solid fa-phone"></i> Call
+  </a>
   ` : `<span class="muted-text" style="font-size:13px;">No contact provided</span>`}
 </p>
               <p style="margin:2px 0; font-size:14px;">${profile.about}</p>
             </div>
           </div>
-          ${editButton}`;
+          <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px;">
+            ${editButton}
+            ${deleteButton}
+          </div>`;
       profilesContainer.appendChild(profileDiv);
     });
   }
@@ -408,17 +449,23 @@ window.onload=function() {
   
   document.getElementById('welcomeModal').style.display='flex';
   auth.onAuthStateChanged(user=>{
-    currentUser=user;
-    updateAuthUI();
-    if(user){
-      setUserPresence(user.uid);
-      loadOwnProfile();
-      linkProfileIfExistsByEmail(user);
-      showPage('homePage', false);
-    } else {
+    if (!user) {
+      currentUser = null;
+      isAdmin = false;
+      updateAuthUI();
       clearProfileForm();
       showPage('authPage', false);
+      return;
     }
+
+    enforceAdminAccess(user);
+    currentUser = user;
+    updateAuthUI();
+    setUserPresence(user.uid);
+    loadOwnProfile();
+    linkProfileIfExistsByEmail(user);
+    showPage('homePage', false);
+
     if(lastProfilesSnapshot){
       renderProfiles(lastProfilesSnapshot);
       renderInbox(lastProfilesSnapshot);
@@ -675,6 +722,7 @@ function signUp() {
 
   auth.createUserWithEmailAndPassword(email, password)
     .then((cred) => {
+      enforceAdminAccess(cred.user);
       currentUser = cred.user;
       updateAuthUI();
       const user = cred.user;
@@ -700,6 +748,7 @@ function login() {
 
   auth.signInWithEmailAndPassword(email, password)
     .then((cred) => {
+      enforceAdminAccess(cred.user);
       currentUser = cred.user;
       updateAuthUI();
       loadOwnProfile();
@@ -769,6 +818,25 @@ function clearProfileForm() {
   document.getElementById('about').value = '';
   document.getElementById('photo').value = '';
   document.getElementById('currentPhotoURL').value = '';
+}
+
+function deleteUserProfile(key, buttonEl) {
+  if (!isAdmin || !currentUser) {
+    return;
+  }
+
+  const confirmed = window.confirm('Are you sure you want to delete this profile?');
+  if (!confirmed) {
+    return;
+  }
+
+  if (buttonEl && buttonEl.closest('.card')) {
+    buttonEl.closest('.card').remove();
+  }
+
+  profilesRef.child(key).remove().catch(() => {
+    alert('Failed to delete profile.');
+  });
 }
 
 function editUserProfile(key) {
